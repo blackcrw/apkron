@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func CreateTemporaryDirectory() (string, error) {
+func CreateTempDirectory() (string, error) {
 	var temp_dir_path, err = ioutil.TempDir("", "")
 
 	if err != nil { return "", fmt.Errorf("%w", err) }
@@ -14,4 +14,4 @@ func CreateTemporaryDirectory() (string, error) {
 	return temp_dir_path, nil
 }
 
-func DeleteTemporaryDirectory(temp_dir_path string)  { os.RemoveAll(temp_dir_path) }
+func DeleteTempDirectory(temp_dir_path string) error { return os.RemoveAll(temp_dir_path) }
