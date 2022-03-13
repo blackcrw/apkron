@@ -1,13 +1,15 @@
 package interesting
 
 import (
-	"fmt"
 	"os"
 	"regexp"
+
+	"github.com/blackcrw/apkron/internal/models"
+	"github.com/blackcrw/apkron/internal/text"
 )
 
-func AndroidManifest(temporary_directory string) ([][]string, error) {
-	var _ = [78][2]string{
+func get_description_by_name_permission(permission_name string) string {
+	var permissions_descriptions = [103][2]string{
 		{"ACCESS_CHECKIN_PROPERTIES"            , "Allows read/write access to the \"properties\" table in the checkin database, to change values that get uploaded."},
 		{"ACCESS_COARSE_LOCATION"               , "Allows an app to access approximate location derived from network location sources such as cell towers and Wi-Fi."},
 		{"ACCESS_FINE_LOCATION"                 , "Allows an app to access precise location from location sources such as GPS, cell towers, and Wi-Fi."},
@@ -86,15 +88,62 @@ func AndroidManifest(temporary_directory string) ([][]string, error) {
 		{"INSTALL_SHORTCUT"                     , "Allows an application to install a shortcut in Launcher."},
 		{"INTERNAL_SYSTEM_WINDOW"               , "Allows an application to open windows that are for use by parts of the system user interface."},
 		{"INTERNET"                             , "Allows applications to open network sockets."},
+		{"KILL_BACKGROUND_PROCESSES"            , "Allows an application to call killBackgroundProcesses(String)."},
+		{"LOCATION_HARDWARE"                    , "Allows an application to use location features in hardware, such as the geofencing api."},
+		{"MANAGE_ACCOUNTS"                      , "Allows an application to manage the list of accounts in the AccountManager."},
+		{"MANAGE_APP_TOKENS"                    , "Allows an application to manage (create, destroy, Z-order) application tokens in the window manager."},
+		{"MANAGE_DOCUMENTS"                     , "Allows an application to manage access to documents, usually as part of a document picker."},
+		{"MASTER_CLEAR"                         , "Not for use by third-party applications."},
+		{"MEDIA_CONTENT_CONTROL"                , "Allows an application to know what content is playing and control its playback."},
+		{"MODIFY_AUDIO_SETTINGS"                , "Allows an application to modify global audio setting.s."},
+		{"MODIFY_PHONE_STATE"                   , "Allows modification of the telephony state - power on, mmi, etc."},
+		{"MOUNT_FORMAT_FILESYSTEMS"             , "Allows formatting file systems for removable storage."},
+		{"MOUNT_UNMOUNT_FILESYSTEMS"            , "Allows mounting and unmounting file systems for removable storage."},
+		{"NFC"                                  , "Allows applications to perform I/O operations over NFC."},
+		{"PACKAGE_USAGE_STATS"                  , "Allows an application to collect component usage statistics."},
+		{"PERSISTENT_ACTIVITY"                  , "This constant was deprecated in API level 9. This functionality will be removed in the future; please do not use. Allow an application to make its activities persistent."},
+		{"PROCESS_OUTGOING_CALLS"               , "Allows an application to monitor, modify, or abort outgoing calls."},
+		{"READ_CALENDAR"                        , "Allows an application to read the user\"s calendar data."},
+		{"READ_CALL_LOG"                        , "Allows an application to read the user\"s call log."},
+		{"READ_CONTACTS"                        , "Allows an application to read the user\"s contacts data."},
+		{"READ_EXTERNAL_STORAGE"                , "Allows an application to read from external storage."},
+		{"READ_FRAME_BUFFER"                    , "Allows an application to take screen shots and more generally get access to the frame buffer data."},
+		{"READ_HISTORY_BOOKMARKS"               , "Allows an application to read (but not write) the user\"s browsing history and bookmarks."},
+		{"READ_INPUT_STATE"                     , "This constant was deprecated in API level 16. The API that used this permission has been removed."},
+		{"READ_LOGS"                            , "Allows an application to read the low-level system log files."},
+		{"READ_PHONE_STATE"                     , "Allows read only access to phone state."},
+		{"READ_PROFILE"                         , "Allows an application to read the user\"s personal profile data."},		
 	}
 
+	for _, k := range permissions_descriptions {
+		if k[0] == permission_name {
+			return k[1]
+		}
+	}
+
+	return ""
+}
+
+func AndroidManifest(temporary_directory string) (*models.InterestingModel, error) {
+	var model = models.InterestingModel{Permissions: []models.InterestingPermissionAndroidModel{}}
 	var raw, err = os.ReadFile(temporary_directory+"/AndroidManifest.xml")
 
-	if err != nil { return [][]string{}, fmt.Errorf("%w", err) }
-		
-	var regxp, _ = regexp.Compile(`(?i)android:permission=\"android.permission.(.*?)\".*?`)
+	if err != nil {
+		return &models.InterestingModel{}, err
+	}
 
-	var submatch = regxp.FindAllStringSubmatch(string(raw[:]), -1)
+	var regxp, _ = regexp.Compile(`(?i)android:permission=\"android.permission.(.*?)\".*?`)
 	
-	return submatch, nil
+	for _, submatch := range regxp.FindAllStringSubmatch(string(raw[:]), -1) {
+		if !text.ContainsPermissionByName(&model.Permissions, submatch[1]) {
+			model.Permissions = append(model.Permissions, 
+				models.InterestingPermissionAndroidModel{
+					Name: submatch[1], 
+					Description: get_description_by_name_permission(submatch[1]), 
+					Match: submatch[0],
+			})
+		}
+	}
+
+	return &model, nil
 }

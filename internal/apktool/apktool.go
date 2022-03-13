@@ -26,3 +26,15 @@ func Decompile(apk_path, temp_path string) (string, error) {
 
 	return string(apktool_output), nil
 }
+
+func Version() (string, error) {
+	var apktool_exec = exec.Command("apktool", "-version")
+
+	var apktool_output, err = apktool_exec.CombinedOutput()
+
+	if err != nil {
+		return "", fmt.Errorf("%w - (%s)", err, "When running apktool")
+	}
+
+	return string(apktool_output), nil
+}
