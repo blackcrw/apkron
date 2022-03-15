@@ -42,7 +42,7 @@ var (
 func doPrintbs(a ...interface{}) (str string){
 	for arg_num, arg := range a {
 		if arg_num > 0 { str += " " }
-		str += arg.(string)
+		str += fmt.Sprint(arg)
 	}
 
 	return
@@ -74,6 +74,10 @@ func Danger(a ...interface{}) {
 
 func Info(a ...interface{}) {
 	stdout.WriteString(PREFIX_INFO +" "+ doPrintbs(a...) +endl)
+}
+
+func PrinterPrefixColor(prefix string, color string, a ...interface{}) {
+	stdout.WriteString(fmt.Sprintf("%s%s %s%s\n", prefix, color, RESET, doPrintbs(a...)))
 }
 
 func Scan(a ...interface{}) string {
